@@ -70,8 +70,8 @@ router.route('/calonpilkada').get(function(req, res, next) {
 					var clone = _.clone(candidate),
 						img = clone.id_peserta + '.jpg',
 						selectedVisiMisi = visiMisi.filter(function(raw){
-							return Number(raw.candidate_id) === Number(clone.id_peserta);
-						})[0];
+							return typeof raw !== 'undefined' && Number(raw.candidate_id) === Number(clone.id_peserta);
+						})[0] || {};
 					
 					if( !fileExists(path.join(__dirname, '/public', 'images', img)) ) 
 						img = 'person.jpg';
