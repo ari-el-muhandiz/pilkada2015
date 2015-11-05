@@ -1,0 +1,25 @@
+{
+  "name": "pilkada",
+  "version": "0.0.1",
+  "description": "API for Pilkada 2015",
+  "main": "server.js",
+  "dependencies": {
+    "axios": "^0.7.0",
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "morgan": "^1.6.1",
+    "underscore": "^1.8.3",
+    "winston": "^2.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "API",
+    "Pilkada"
+  ],
+  "author": "Ari Firmanto",
+  "license": "MIT"
+}
