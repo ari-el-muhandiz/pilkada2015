@@ -28,49 +28,57 @@ app.use(require('morgan')('combined', { "stream": logger.stream } ));
 
 //calon pilkada api
 router.route('/calonpilkada').get(function(req, res, next) {
-	var apiEndPoint = 'http://api.pemiluapi.org/calonpilkada/api/candidates?';
+	var apiKandidat = 'http://api.pemiluapi.org/calonpilkada/api/candidates?apiKey='+apiKey,
+		apiVisiMisi = 'http://api.pemiluapi.org/calonpilkada/api/vision_missions?apiKey='+apiKey;
 	
-	var url = apiEndPoint + 'apiKey=' + apiKey + '&' + qs.stringify(req.query);
+	var urlKandidat = apiKandidat + '&' + qs.stringify(req.query);
 	
-	logger.info("Request to " + url);
+	logger.info("Request to " + urlKandidat);
 	
 	var imgUrl = req.protocol + '://' + req.get('host') + '/images/';
 	
 	
 	function fileExists(filePath) {
-    	try
-    	{
+    	try {
         	return fs.statSync(filePath).isFile();
-    	}
-    	catch (err)
-    	{
+    	} catch (err) {
         	return false;
     	}
 	}
 
+	var jsonKandidat;
 	
-	request.get(url)
+	request.get(urlKandidat)
 	.then(function(resp){	
-		var raw = JSON.parse(JSON.stringify(resp.data)),
-			results = raw.data.results;
-			
+		jsonKandidat = JSON.parse(JSON.stringify(resp.data)).data.results;
 		
-		res.status(resp.status).json(
+		var requestPromise = jsonKandidat.candidates.map(function(k){
+			return request.get(apiVisiMisi + '&peserta=' + k.id_peserta);
+		});
+		
+		return request.all(requestPromise);
+			
+	}).then(function(responses){
+		var visiMisi = responses.map(function(raw){
+						return raw.data.data.results.vision_missions[0];
+					});
+							
+		res.status(200).json(
 			{
 				success: true, 
-				data: results.candidates.map(function(candidate){
-					var clone = _.clone(candidate);
-					var img = clone.id_peserta + '.jpg';
-					
-					fs.readdir(path.join(__dirname, '/public'), function(err, res){
-						console.log(err)
-						console.log(res);
-					})
+				data: jsonKandidat.candidates.map(function(candidate){
+					var clone = _.clone(candidate),
+						img = clone.id_peserta + '.jpg',
+						selectedVisiMisi = visiMisi.filter(function(raw){
+							return Number(raw.candidate_id) === Number(clone.id_peserta);
+						})[0];
 					
 					if( !fileExists(path.join(__dirname, '/public', 'images', img)) ) 
 						img = 'person.jpg';
 										
 					clone.picture_url = imgUrl + img;
+					clone.visi = selectedVisiMisi.visi;
+					clone.misi = selectedVisiMisi.misi;
 					
 					return clone;
 				})
